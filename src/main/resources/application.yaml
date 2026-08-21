@@ -17,3 +17,10 @@ server:
   port: 8083
   servlet:
     context-path: /reservations
+
+app:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:4200
+      - http://localhost:8080
