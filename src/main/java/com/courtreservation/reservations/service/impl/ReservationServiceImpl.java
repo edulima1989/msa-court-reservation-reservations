@@ -1,4 +1,4 @@
-package com.courtreservation.reservations.service;
+package com.courtreservation.reservations.service.impl;
 
 import com.courtreservation.reservations.dto.CreateReservationRequest;
 import com.courtreservation.reservations.dto.ReservationResponse;
@@ -12,6 +12,8 @@ import com.courtreservation.reservations.repository.ReservationRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+
+import com.courtreservation.reservations.service.ReservationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
