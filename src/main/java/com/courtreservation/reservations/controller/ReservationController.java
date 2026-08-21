@@ -6,6 +6,11 @@ import com.courtreservation.reservations.model.ReservationState;
 import com.courtreservation.reservations.service.ReservationService;
 import java.time.LocalDate;
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/reservations")
+@Tag(name = "Reservas", description = "Creación, consulta y cancelación de reservas")
 public class ReservationController {
 
   private final ReservationService reservationService;
@@ -28,20 +34,36 @@ public class ReservationController {
   }
 
   @PostMapping
+  @Operation(summary = "Crear una reserva")
+  @ApiResponses({
+      @ApiResponse(responseCode = "201", description = "Reserva creada"),
+      @ApiResponse(responseCode = "400", description = "Datos inválidos"),
+      @ApiResponse(responseCode = "409", description = "Cancha no disponible")
+  })
   public ResponseEntity<ReservationResponse> create(@RequestBody CreateReservationRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED).body(reservationService.create(request));
   }
 
   @GetMapping("/{reservationId}")
+  @Operation(summary = "Consultar una reserva por id")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Reserva encontrada"),
+      @ApiResponse(responseCode = "404", description = "Reserva no encontrada")
+  })
   public ReservationResponse getById(@PathVariable Long reservationId) {
     return reservationService.getById(reservationId);
   }
 
   @GetMapping
+  @Operation(summary = "Buscar reservas")
   public List<ReservationResponse> search(
+      @Parameter(description = "Id de la cancha")
       @RequestParam(required = false) Long reservationCourtId,
+      @Parameter(description = "Fecha de la reserva")
       @RequestParam(required = false) LocalDate reservationDate,
+      @Parameter(description = "Id del usuario")
       @RequestParam(required = false) Long reservationUserId,
+      @Parameter(description = "Estado de la reserva")
       @RequestParam(required = false) ReservationState reservationState) {
     return reservationService.search(
         reservationCourtId,
@@ -51,6 +73,12 @@ public class ReservationController {
   }
 
   @PatchMapping("/{reservationId}/cancel")
+  @Operation(summary = "Cancelar una reserva")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Reserva cancelada"),
+      @ApiResponse(responseCode = "404", description = "Reserva no encontrada"),
+      @ApiResponse(responseCode = "400", description = "La reserva no puede cancelarse")
+  })
   public ReservationResponse cancel(@PathVariable Long reservationId) {
     return reservationService.cancel(reservationId);
   }
