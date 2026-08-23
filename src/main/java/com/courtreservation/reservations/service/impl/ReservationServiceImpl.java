@@ -53,6 +53,22 @@ public class ReservationServiceImpl implements ReservationService {
 
   @Override
   @Transactional(readOnly = true)
+  public List<ReservationResponse> getActiveByDate(LocalDate date) {
+    if (date == null) {
+      throw new ReservationValidationException("La fecha es obligatoria");
+    }
+
+    return reservationRepository
+        .findByReservationDateAndReservationStateOrderByReservationStartTime(
+            date,
+            ReservationState.ACTIVO)
+        .stream()
+        .map(reservationMapper::toResponse)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public List<ReservationResponse> search(Long reservationCourtId, LocalDate reservationDate, Long reservationUserId, ReservationState reservationState) {
     return reservationRepository.search(reservationCourtId, reservationDate, reservationUserId, reservationState)
         .stream()

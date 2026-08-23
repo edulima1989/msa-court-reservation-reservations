@@ -11,6 +11,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
+  List<Reservation> findByReservationDateAndReservationStateOrderByReservationStartTime(
+      LocalDate reservationDate,
+      ReservationState reservationState);
+
   @Query("""
       select r
       from Reservation r

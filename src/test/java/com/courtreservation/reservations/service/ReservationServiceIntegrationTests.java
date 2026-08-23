@@ -43,6 +43,51 @@ class ReservationServiceIntegrationTests {
   }
 
   @Test
+  void findsOnlyActiveReservationsForDateOrderedByStartTime() {
+    LocalDate date = LocalDate.now().plusDays(3);
+    ReservationResponse laterReservation = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(11, 0),
+        LocalTime.of(12, 0),
+        10L,
+        5L));
+    ReservationResponse earlyReservation = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(8, 0),
+        LocalTime.of(9, 0),
+        11L,
+        6L));
+    ReservationResponse canceledReservation = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+        12L,
+        7L));
+    reservationService.cancel(canceledReservation.reservationId());
+    reservationService.create(new CreateReservationRequest(
+        date.plusDays(1),
+        LocalTime.of(8, 0),
+        LocalTime.of(9, 0),
+        13L,
+        8L));
+
+    List<ReservationResponse> results = reservationService.getActiveByDate(date);
+
+    assertThat(results)
+        .extracting(ReservationResponse::reservationId)
+        .containsExactly(earlyReservation.reservationId(), laterReservation.reservationId());
+    assertThat(results)
+        .allMatch(reservation -> reservation.reservationState() == ReservationState.ACTIVO);
+  }
+
+  @Test
+  void rejectsNullDateWhenFindingActiveReservations() {
+    assertThatThrownBy(() -> reservationService.getActiveByDate(null))
+        .isInstanceOf(ReservationValidationException.class)
+        .hasMessage("La fecha es obligatoria");
+  }
+
+  @Test
   void preventsOverlappingReservationsForSameCourt() {
     CreateReservationRequest first = new CreateReservationRequest(
         LocalDate.now().plusDays(1),

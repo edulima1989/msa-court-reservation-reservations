@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -52,6 +53,18 @@ public class ReservationController {
   })
   public ReservationResponse getById(@PathVariable Long reservationId) {
     return reservationService.getById(reservationId);
+  }
+
+  @GetMapping("/active")
+  @Operation(summary = "Consultar reservas activas por fecha")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Reservas activas encontradas"),
+      @ApiResponse(responseCode = "400", description = "Fecha inválida o no enviada")
+  })
+  public List<ReservationResponse> getActiveByDate(
+      @Parameter(description = "Fecha de las reservas", example = "2026-08-23", required = true)
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    return reservationService.getActiveByDate(date);
   }
 
   @GetMapping

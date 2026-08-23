@@ -12,6 +12,8 @@ public interface ReservationService {
 
   ReservationResponse getById(Long reservationId);
 
+  List<ReservationResponse> getActiveByDate(LocalDate date);
+
   List<ReservationResponse> search(Long reservationCourtId, LocalDate reservationDate, Long reservationUserId, ReservationState reservationState);
 
   ReservationResponse cancel(Long reservationId);
