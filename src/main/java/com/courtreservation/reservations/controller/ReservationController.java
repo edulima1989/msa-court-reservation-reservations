@@ -67,6 +67,25 @@ public class ReservationController {
     return reservationService.getActiveByDate(date);
   }
 
+  @GetMapping("/active/all")
+  @Operation(summary = "Consultar todas las reservas activas")
+  @ApiResponse(responseCode = "200", description = "Reservas activas encontradas")
+  public List<ReservationResponse> getAllActive() {
+    return reservationService.getAllActive();
+  }
+
+  @GetMapping("/active/user/{userId}")
+  @Operation(summary = "Consultar reservas activas por usuario")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Reservas activas del usuario encontradas"),
+      @ApiResponse(responseCode = "400", description = "Identificador de usuario inválido")
+  })
+  public List<ReservationResponse> getActiveByUserId(
+      @Parameter(description = "Identificador del usuario", example = "15", required = true)
+      @PathVariable Long userId) {
+    return reservationService.getActiveByUserId(userId);
+  }
+
   @GetMapping
   @Operation(summary = "Buscar reservas")
   public List<ReservationResponse> search(

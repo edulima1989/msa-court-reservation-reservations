@@ -88,6 +88,85 @@ class ReservationServiceIntegrationTests {
   }
 
   @Test
+  void findsAllActiveReservations() {
+    LocalDate date = LocalDate.now().plusDays(4);
+    ReservationResponse firstActive = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(8, 0),
+        LocalTime.of(9, 0),
+        20L,
+        30L));
+    ReservationResponse canceled = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+        21L,
+        31L));
+    ReservationResponse secondActive = reservationService.create(new CreateReservationRequest(
+        date.plusDays(1),
+        LocalTime.of(7, 0),
+        LocalTime.of(8, 0),
+        22L,
+        32L));
+    reservationService.cancel(canceled.reservationId());
+
+    List<ReservationResponse> results = reservationService.getAllActive();
+
+    assertThat(results)
+        .extracting(ReservationResponse::reservationId)
+        .containsExactly(firstActive.reservationId(), secondActive.reservationId());
+    assertThat(results)
+        .allMatch(reservation -> reservation.reservationState() == ReservationState.ACTIVO);
+  }
+
+  @Test
+  void findsActiveReservationsByUserId() {
+    LocalDate date = LocalDate.now().plusDays(5);
+    Long userId = 40L;
+    ReservationResponse firstActive = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(8, 0),
+        LocalTime.of(9, 0),
+        30L,
+        userId));
+    ReservationResponse canceled = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+        31L,
+        userId));
+    ReservationResponse secondActive = reservationService.create(new CreateReservationRequest(
+        date.plusDays(1),
+        LocalTime.of(7, 0),
+        LocalTime.of(8, 0),
+        32L,
+        userId));
+    reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(10, 0),
+        LocalTime.of(11, 0),
+        33L,
+        41L));
+    reservationService.cancel(canceled.reservationId());
+
+    List<ReservationResponse> results = reservationService.getActiveByUserId(userId);
+
+    assertThat(results)
+        .extracting(ReservationResponse::reservationId)
+        .containsExactly(firstActive.reservationId(), secondActive.reservationId());
+    assertThat(results)
+        .allMatch(reservation -> reservation.reservationUserId().equals(userId)
+            && reservation.reservationState() == ReservationState.ACTIVO);
+  }
+
+  @Test
+  void rejectsNullUserIdWhenFindingActiveReservations() {
+    assertThatThrownBy(() -> reservationService.getActiveByUserId(null))
+        .isInstanceOf(ReservationValidationException.class)
+        .hasMessage("El identificador del usuario es obligatorio");
+  }
+
+  @Test
   void preventsOverlappingReservationsForSameCourt() {
     CreateReservationRequest first = new CreateReservationRequest(
         LocalDate.now().plusDays(1),

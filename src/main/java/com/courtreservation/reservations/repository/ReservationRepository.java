@@ -15,6 +15,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       LocalDate reservationDate,
       ReservationState reservationState);
 
+  List<Reservation> findByReservationStateOrderByReservationDateAscReservationStartTimeAsc(
+      ReservationState reservationState);
+
+  List<Reservation> findByReservationUserIdAndReservationStateOrderByReservationDateAscReservationStartTimeAsc(
+      Long reservationUserId,
+      ReservationState reservationState);
+
   @Query("""
       select r
       from Reservation r
