@@ -86,6 +86,25 @@ public class ReservationController {
     return reservationService.getActiveByUserId(userId);
   }
 
+  @GetMapping("/canceled/all")
+  @Operation(summary = "Consultar todas las reservas canceladas")
+  @ApiResponse(responseCode = "200", description = "Reservas canceladas encontradas")
+  public List<ReservationResponse> getAllCanceled() {
+    return reservationService.getAllCanceled();
+  }
+
+  @GetMapping("/canceled/user/{userId}")
+  @Operation(summary = "Consultar reservas canceladas por usuario")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Reservas canceladas del usuario encontradas"),
+      @ApiResponse(responseCode = "400", description = "Identificador de usuario inválido")
+  })
+  public List<ReservationResponse> getCanceledByUserId(
+      @Parameter(description = "Identificador del usuario", example = "15", required = true)
+      @PathVariable Long userId) {
+    return reservationService.getCanceledByUserId(userId);
+  }
+
   @GetMapping
   @Operation(summary = "Buscar reservas")
   public List<ReservationResponse> search(

@@ -18,6 +18,10 @@ public interface ReservationService {
 
   List<ReservationResponse> getActiveByUserId(Long userId);
 
+  List<ReservationResponse> getAllCanceled();
+
+  List<ReservationResponse> getCanceledByUserId(Long userId);
+
   List<ReservationResponse> search(Long reservationCourtId, LocalDate reservationDate, Long reservationUserId, ReservationState reservationState);
 
   ReservationResponse cancel(Long reservationId);

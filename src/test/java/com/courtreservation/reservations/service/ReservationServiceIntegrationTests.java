@@ -167,6 +167,90 @@ class ReservationServiceIntegrationTests {
   }
 
   @Test
+  void findsAllCanceledReservations() {
+    LocalDate date = LocalDate.now().plusDays(6);
+    ReservationResponse firstCanceled = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(8, 0),
+        LocalTime.of(9, 0),
+        40L,
+        50L));
+    ReservationResponse active = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+        41L,
+        51L));
+    ReservationResponse secondCanceled = reservationService.create(new CreateReservationRequest(
+        date.plusDays(1),
+        LocalTime.of(7, 0),
+        LocalTime.of(8, 0),
+        42L,
+        52L));
+    reservationService.cancel(firstCanceled.reservationId());
+    reservationService.cancel(secondCanceled.reservationId());
+
+    List<ReservationResponse> results = reservationService.getAllCanceled();
+
+    assertThat(results)
+        .extracting(ReservationResponse::reservationId)
+        .containsExactly(firstCanceled.reservationId(), secondCanceled.reservationId())
+        .doesNotContain(active.reservationId());
+    assertThat(results)
+        .allMatch(reservation -> reservation.reservationState() == ReservationState.CANCELADO);
+  }
+
+  @Test
+  void findsCanceledReservationsByUserId() {
+    LocalDate date = LocalDate.now().plusDays(7);
+    Long userId = 60L;
+    ReservationResponse firstCanceled = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(8, 0),
+        LocalTime.of(9, 0),
+        50L,
+        userId));
+    ReservationResponse active = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(9, 0),
+        LocalTime.of(10, 0),
+        51L,
+        userId));
+    ReservationResponse secondCanceled = reservationService.create(new CreateReservationRequest(
+        date.plusDays(1),
+        LocalTime.of(7, 0),
+        LocalTime.of(8, 0),
+        52L,
+        userId));
+    ReservationResponse otherUserCanceled = reservationService.create(new CreateReservationRequest(
+        date,
+        LocalTime.of(10, 0),
+        LocalTime.of(11, 0),
+        53L,
+        61L));
+    reservationService.cancel(firstCanceled.reservationId());
+    reservationService.cancel(secondCanceled.reservationId());
+    reservationService.cancel(otherUserCanceled.reservationId());
+
+    List<ReservationResponse> results = reservationService.getCanceledByUserId(userId);
+
+    assertThat(results)
+        .extracting(ReservationResponse::reservationId)
+        .containsExactly(firstCanceled.reservationId(), secondCanceled.reservationId())
+        .doesNotContain(active.reservationId(), otherUserCanceled.reservationId());
+    assertThat(results)
+        .allMatch(reservation -> reservation.reservationUserId().equals(userId)
+            && reservation.reservationState() == ReservationState.CANCELADO);
+  }
+
+  @Test
+  void rejectsNullUserIdWhenFindingCanceledReservations() {
+    assertThatThrownBy(() -> reservationService.getCanceledByUserId(null))
+        .isInstanceOf(ReservationValidationException.class)
+        .hasMessage("El identificador del usuario es obligatorio");
+  }
+
+  @Test
   void preventsOverlappingReservationsForSameCourt() {
     CreateReservationRequest first = new CreateReservationRequest(
         LocalDate.now().plusDays(1),

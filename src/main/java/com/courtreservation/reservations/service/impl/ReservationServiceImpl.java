@@ -96,6 +96,33 @@ public class ReservationServiceImpl implements ReservationService {
 
   @Override
   @Transactional(readOnly = true)
+  public List<ReservationResponse> getAllCanceled() {
+    return reservationRepository
+        .findByReservationStateOrderByReservationDateAscReservationStartTimeAsc(
+            ReservationState.CANCELADO)
+        .stream()
+        .map(reservationMapper::toResponse)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ReservationResponse> getCanceledByUserId(Long userId) {
+    if (userId == null) {
+      throw new ReservationValidationException("El identificador del usuario es obligatorio");
+    }
+
+    return reservationRepository
+        .findByReservationUserIdAndReservationStateOrderByReservationDateAscReservationStartTimeAsc(
+            userId,
+            ReservationState.CANCELADO)
+        .stream()
+        .map(reservationMapper::toResponse)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public List<ReservationResponse> search(Long reservationCourtId, LocalDate reservationDate, Long reservationUserId, ReservationState reservationState) {
     return reservationRepository.search(reservationCourtId, reservationDate, reservationUserId, reservationState)
         .stream()
