@@ -272,6 +272,45 @@ class ReservationServiceIntegrationTests {
   }
 
   @Test
+  void rejectsFourthActiveNonExpiredReservationForSameUser() {
+    LocalDate date = LocalDate.now().plusDays(10);
+    Long userId = 90L;
+
+    reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(8, 0), LocalTime.of(9, 0), 101L, userId));
+    reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(9, 0), LocalTime.of(10, 0), 102L, userId));
+    reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(10, 0), LocalTime.of(11, 0), 103L, userId));
+
+    CreateReservationRequest fourth = new CreateReservationRequest(
+        date, LocalTime.of(11, 0), LocalTime.of(12, 0), 104L, userId);
+
+    assertThatThrownBy(() -> reservationService.create(fourth))
+        .isInstanceOf(ReservationConflictException.class)
+        .hasMessage("Se ha llegado al límite de reservas activas simultáneas");
+  }
+
+  @Test
+  void canceledReservationDoesNotCountTowardsCreationLimit() {
+    LocalDate date = LocalDate.now().plusDays(11);
+    Long userId = 91L;
+
+    ReservationResponse canceled = reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(8, 0), LocalTime.of(9, 0), 111L, userId));
+    reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(9, 0), LocalTime.of(10, 0), 112L, userId));
+    reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(10, 0), LocalTime.of(11, 0), 113L, userId));
+    reservationService.cancel(canceled.reservationId());
+
+    ReservationResponse replacement = reservationService.create(new CreateReservationRequest(
+        date, LocalTime.of(11, 0), LocalTime.of(12, 0), 114L, userId));
+
+    assertThat(replacement.reservationState()).isEqualTo(ReservationState.ACTIVO);
+  }
+
+  @Test
   void cancelsReservation() {
     CreateReservationRequest request = new CreateReservationRequest(
         LocalDate.now().plusDays(2),

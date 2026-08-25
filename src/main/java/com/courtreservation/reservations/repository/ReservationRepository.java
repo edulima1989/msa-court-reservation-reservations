@@ -52,4 +52,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       @Param("reservationDate") LocalDate reservationDate,
       @Param("reservationUserId") Long reservationUserId,
       @Param("reservationState") ReservationState reservationState);
+
+  @Query("""
+      select count(r)
+      from Reservation r
+      where r.reservationUserId = :reservationUserId
+        and r.reservationState = com.courtreservation.reservations.model.ReservationState.ACTIVO
+        and (r.reservationDate > :currentDate
+          or (r.reservationDate = :currentDate and r.reservationEndTime > :currentTime))
+      """)
+  long countActiveNonExpiredReservationsByUserId(
+      @Param("reservationUserId") Long reservationUserId,
+      @Param("currentDate") LocalDate currentDate,
+      @Param("currentTime") LocalTime currentTime);
 }
