@@ -11,6 +11,7 @@ import com.courtreservation.reservations.model.ReservationState;
 import com.courtreservation.reservations.repository.ReservationRepository;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.courtreservation.reservations.service.ReservationService;
@@ -38,6 +39,7 @@ public class ReservationServiceImpl implements ReservationService {
   public ReservationResponse create(CreateReservationRequest request) {
     validateRequest(request);
     ensureNoConflict(request);
+    validateCreationLimit(request);
 
     Reservation reservation = reservationMapper.toEntity(request);
     reservation.setReservationState(ReservationState.ACTIVO);
@@ -167,6 +169,17 @@ public class ReservationServiceImpl implements ReservationService {
         request.reservationStartTime(),
         request.reservationEndTime()).isEmpty()) {
       throw new ReservationConflictException("La cancha no está disponible en el horario solicitado");
+    }
+  }
+
+  private void validateCreationLimit(CreateReservationRequest request) {
+    LocalDateTime now = LocalDateTime.now(clock);
+    long reservationCount = reservationRepository.countActiveNonExpiredReservationsByUserId(
+        request.reservationUserId(),
+        now.toLocalDate(),
+        now.toLocalTime());
+    if (reservationCount >= 3) {
+      throw new ReservationConflictException("Se ha llegado al límite de reservas activas simultáneas");
     }
   }
 
